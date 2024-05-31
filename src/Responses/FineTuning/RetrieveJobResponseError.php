@@ -18,9 +18,9 @@ final class RetrieveJobResponseError implements ResponseContract
     use ArrayAccessible;
 
     private function __construct(
-        public readonly string $code,
+        public readonly ?string $code,
         public readonly ?string $param,
-        public readonly string $message,
+        public readonly ?string $message,
     ) {
     }
 
@@ -31,6 +31,10 @@ final class RetrieveJobResponseError implements ResponseContract
      */
     public static function from(array $attributes): ?self
     {
+        if (key_exists('error', $attributes) && is_null($attributes['error'])) {
+            return null;
+        }
+        
         return new self(
             $attributes['code'],
             $attributes['param'],
