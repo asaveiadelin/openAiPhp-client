@@ -41,6 +41,10 @@ final class ListJobsResponse implements ResponseContract, ResponseHasMetaInforma
      */
     public static function from(array $attributes, MetaInformation $meta): self
     {
+        if (!is_array($attributes['data'])) {
+            $attributes['data'] = [];
+        }
+
         $data = array_map(fn (array $result): RetrieveJobResponse => RetrieveJobResponse::from(
             $result,
             $meta,
