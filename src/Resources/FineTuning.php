@@ -22,7 +22,7 @@ final class FineTuning implements FineTuningContract
      *
      * @see https://platform.openai.com/docs/api-reference/fine-tuning/create
      *
-     * @param  array<string, mixed>  $parameters
+     * @param array<string, mixed> $parameters
      */
     public function createJob(array $parameters): RetrieveJobResponse
     {
@@ -39,16 +39,29 @@ final class FineTuning implements FineTuningContract
      *
      * @see https://platform.openai.com/docs/api-reference/fine-tuning/undefined
      *
-     * @param  array<string, mixed>  $parameters
+     * @param array<string, mixed> $parameters
      */
     public function listJobs(array $parameters = []): ListJobsResponse
     {
-        $payload = Payload::list('fine_tuning/jobs', $parameters);
+        $tries = 0;
+        $maxTries = 5;
+        $sleepBetweenTriesInSeconds = 5;
 
-        /** @var Response<array{object: string, data: array<int, array{id: string, object: string, model: string, created_at: int, finished_at: ?int, fine_tuned_model: ?string, hyperparameters: array{n_epochs: int|string, batch_size: int|string|null, learning_rate_multiplier: float|string|null}, organization_id: string, result_files: array<int, string>, status: string, validation_file: ?string, training_file: string, trained_tokens: ?int, error: ?array{code: string, param: ?string, message: string}}>, has_more: bool}> $response */
-        $response = $this->transporter->requestObject($payload);
+        do {
+            $payload = Payload::list('fine_tuning/jobs', $parameters);
 
-        return ListJobsResponse::from($response->data(), $response->meta());
+            /** @var Response<array{object: string, data: array<int, array{id: string, object: string, model: string, created_at: int, finished_at: ?int, fine_tuned_model: ?string, hyperparameters: array{n_epochs: int|string, batch_size: int|string|null, learning_rate_multiplier: float|string|null}, organization_id: string, result_files: array<int, string>, status: string, validation_file: ?string, training_file: string, trained_tokens: ?int, error: ?array{code: string, param: ?string, message: string}}>, has_more: bool}> $response */
+            $response = $this->transporter->requestObject($payload);
+
+            $data = $response->data();
+
+            ++$tries;
+            if (is_string($data)) {
+                sleep($sleepBetweenTriesInSeconds);
+            }
+        } while ($tries < $maxTries && is_string($data));
+
+        return ListJobsResponse::from($data, $response->meta());
     }
 
     /**
@@ -86,7 +99,7 @@ final class FineTuning implements FineTuningContract
      *
      * @see https://platform.openai.com/docs/api-reference/fine-tuning/list-events
      *
-     * @param  array<string, mixed>  $parameters
+     * @param array<string, mixed> $parameters
      */
     public function listJobEvents(string $jobId, array $parameters = []): ListJobEventsResponse
     {
