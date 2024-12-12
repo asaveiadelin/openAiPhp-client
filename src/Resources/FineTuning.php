@@ -61,6 +61,10 @@ final class FineTuning implements FineTuningContract
             }
         } while ($tries < $maxTries && is_string($data));
 
+        if (is_string($data)) {
+            throw(new \Exception("Failed to get fine-tuning jobs: $data"));
+        }
+
         return ListJobsResponse::from($data, $response->meta());
     }
 
